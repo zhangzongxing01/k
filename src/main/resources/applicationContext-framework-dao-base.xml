@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd"
+	default-autowire="byName" default-lazy-init="false">
+
+
+	<bean id="dbPropertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath:db.properties</value>
+				<value>classpath:biz.properties</value>
+			</list>
+		</property>
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+	</bean>
+
+	<bean id="ddbDataSource" class="com.netease.common.dbsupport.ConnectionManagerQSImpl"
+		init-method="init">
+		<property name="url">
+			<value>${ddb.url}</value>
+		</property>
+		<property name="user">
+			<value>${ddb.user}</value>
+		</property>
+		<property name="pass">
+			<value>${ddb.pass}</value>
+		</property>
+		<property name="maxActive">
+			<value>500</value>
+		</property>
+		<property name="maxIdle">
+			<value>800</value>
+		</property>
+		<property name="maxWait">
+			<value>5000</value>
+		</property>
+	</bean>
+	<bean id="dbTransactionManager"
+		class="com.netease.dbsupport.transaction.impl.DBTransactionManagerImpl">
+	</bean>
+
+	<bean id="runtimeStatCounter" class="com.netease.framework.stat.RuntimeStatCounterImpl">
+	</bean>
+
+	<bean id="sqlManager" class="com.netease.common.dbsupport.SqlManagerEduQSProxy">
+		<property name="connectionPool">
+			<ref bean="ddbDataSource" />
+		</property>
+		<property name="transactionManager">
+			<ref bean="dbTransactionManager" />
+		</property>
+		<property name="runtimeStatCounter">
+			<ref bean="runtimeStatCounter" />
+		</property>
+	</bean>
+
+	<bean id="circleDaoBase" class="com.netease.framework.dao.sql.AbstractDaoSqlBase"
+		abstract="true">
+		<property name="sqlManager">
+			<ref bean="sqlManager" />
+		</property>
+	</bean>
+
+
+	<bean id="eduStatsErrorHandler" class="com.netease.edu.commons.statistics.EduStatsErrorHandler"
+		lazy-init="true" />
+	<bean id="statsCommonClient" class="com.timgroup.statsd.NonBlockingStatsDClient"
+		lazy-init="true">
+		<constructor-arg index="0" value="common" />
+		<constructor-arg index="1" value="${stats_hostname}" />
+		<constructor-arg index="2" value="${stats_port}" />
+		<constructor-arg index="3" ref="eduStatsErrorHandler" />
+	</bean>
+	<bean id="commonStatsdService" class="com.netease.edu.commons.statistics.EduStatsdService"
+		lazy-init="true">
+		<property name="statsDClient" ref="statsCommonClient"></property>
+		<property name="eduStatsSwitch" value="${edu_stats_switch}"></property>
+	</bean>
+
+
+
+</beans>
