@@ -20,6 +20,7 @@ public class TestHttpclient {
         Map<String, String> params = new HashMap<String, String>();
         params.put("old", g.toJson(new Object[0]));
         params.put("input", "八拜之交");
-        HttpUtil.postUrl(httpclient, "http://192.168.1.125:12200/api/idiom-solitaire", "utf-8", header, params);
+        String result=HttpUtil.postUrl(httpclient, "http://192.168.1.125:12200/api/idiom-solitaire", "utf-8", header, params);
+        System.out.println(result);
     }
 }
